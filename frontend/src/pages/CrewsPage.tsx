@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Users, Search, Pencil, ArrowRightLeft } from 'lucide-react';
+import { Plus, Users, Search, Pencil, ArrowRightLeft, X } from 'lucide-react';
 import { crewsApi } from '../api/endpoints';
 import type { Crew, CrewSpecialty, CrewStatus } from '../types';
 import { Modal } from '../components/Modal';
@@ -8,6 +8,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonList } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { EmptyState } from '../components/EmptyState';
+import { useAuth } from '../auth/AuthContext';
+import { PERMISSIONS } from '../auth/permissions';
 
 type ModalType = 'create' | 'edit' | 'status' | null;
 
@@ -17,6 +19,9 @@ const STATUSES: CrewStatus[] = ['DISPONIBLE', 'ASIGNADA', 'EN_EJECUCION', 'NO_DI
 export function CrewsPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const { user } = useAuth();
+  const canManage = PERMISSIONS.canManageCrews(user?.role);
+
   const [modal, setModal] = useState<ModalType>(null);
   const [selected, setSelected] = useState<Crew | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,20 +103,41 @@ export function CrewsPage() {
           <p>{crews.length} cuadrillas registradas</p>
         </div>
         <div className="page-header-actions">
-          <button className="primary" onClick={openCreate}><Plus size={14} /> Nueva cuadrilla</button>
+          {canManage && (
+            <button className="primary" onClick={openCreate}>
+              <Plus size={14} /> Nueva cuadrilla
+            </button>
+          )}
         </div>
       </div>
 
       <div className="page-toolbar">
         <div className="search-wrapper">
-            <Search size={15} />
-            <input placeholder="Buscar por código o nombre..." value={search} onChange={(e) => setSearch(e.target.value)}/>
+          <Search size={15} />
+          <input
+            placeholder="Buscar por código o nombre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as CrewStatus | '')}>
-            <option value="">Todos los estados</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as CrewStatus | '')}
+        >
+          <option value="">Todos los estados</option>
+          {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
-        </div>
+        {(search || statusFilter) && (
+          <button
+            className="toolbar-clear"
+            onClick={() => { setSearch(''); setStatusFilter(''); }}
+            title="Limpiar filtros"
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
 
       <div className="table-wrapper">
         {filtered.length === 0 ? (
@@ -119,7 +145,7 @@ export function CrewsPage() {
             icon={Users}
             title={crews.length === 0 ? 'No hay cuadrillas registradas' : 'Sin resultados'}
             description="Crea la primera cuadrilla para asignarla a órdenes"
-            action={crews.length === 0 ? { label: '+ Nueva cuadrilla', onClick: openCreate } : undefined}
+            action={canManage && crews.length === 0 ? { label: '+ Nueva cuadrilla', onClick: openCreate } : undefined}
           />
         ) : (
           <table>
@@ -131,7 +157,7 @@ export function CrewsPage() {
                 <th>Zona</th>
                 <th>Líder</th>
                 <th>Estado</th>
-                <th style={{ textAlign: 'right' }}>Acciones</th>
+                {canManage && <th style={{ textAlign: 'right' }}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -143,16 +169,28 @@ export function CrewsPage() {
                   <td>{c.zone}</td>
                   <td>{c.leader}</td>
                   <td><StatusBadge status={c.status} /></td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="ghost" onClick={() => openEdit(c)} title="Editar" disabled={c.status === 'INACTIVA' || c.status === 'EN_EJECUCION'}>
-                        <Pencil size={14} />
-                      </button>
-                      <button className="ghost" onClick={() => openStatus(c)} title="Cambiar estado" disabled={c.status === 'INACTIVA'}>
-                        <ArrowRightLeft size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {canManage && (
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="ghost"
+                          onClick={() => openEdit(c)}
+                          title="Editar"
+                          disabled={c.status === 'INACTIVA' || c.status === 'EN_EJECUCION'}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          className="ghost"
+                          onClick={() => openStatus(c)}
+                          title="Cambiar estado"
+                          disabled={c.status === 'INACTIVA'}
+                        >
+                          <ArrowRightLeft size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

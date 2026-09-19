@@ -75,3 +75,12 @@ export interface DashboardSummary {
   };
   generatedAt: string;
 }
+
+export type UserRole = 'SUPERVISOR' | 'COORDINATOR' | 'TECHNICIAN';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}

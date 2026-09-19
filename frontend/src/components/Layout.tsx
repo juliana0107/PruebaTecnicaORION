@@ -1,23 +1,43 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Cpu, ClipboardList, Users, Bell } from 'lucide-react';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Cpu, ClipboardList, Users, Bell, LogOut } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
+import { PERMISSIONS } from '../auth/permissions';
 
 const PAGE_INFO: Record<string, { title: string; subtitle: string }> = {
-  '/': { title: 'Dashboard', subtitle: 'Estado general de las actividades de mantenimiento' },
+  '/': { title: 'Dashboard', subtitle: 'Indicadores operacionales' },
   '/assets': { title: 'Activos ITS', subtitle: 'Inventario de infraestructura' },
   '/work-orders': { title: 'Órdenes de Trabajo', subtitle: 'Planificación y control' },
   '/crews': { title: 'Cuadrillas', subtitle: 'Asignación y disponibilidad' },
 };
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/assets', label: 'Activos', icon: Cpu },
-  { to: '/work-orders', label: 'Órdenes', icon: ClipboardList },
-  { to: '/crews', label: 'Cuadrillas', icon: Users },
+const ALL_NAV_ITEMS = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, visible: PERMISSIONS.canViewDashboard },
+  { to: '/assets', label: 'Activos', icon: Cpu, visible: () => true },
+  { to: '/work-orders', label: 'Órdenes', icon: ClipboardList, visible: () => true },
+  { to: '/crews', label: 'Cuadrillas', icon: Users, visible: () => true },
 ];
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const pageInfo = PAGE_INFO[location.pathname] || { title: 'ORION', subtitle: '' };
+
+  useEffect(() => {
+    if (user?.role === 'TECHNICIAN' && location.pathname === '/') {
+      navigate('/work-orders', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const initials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    : 'US';
 
   return (
     <div className="app">
@@ -32,7 +52,7 @@ export function Layout() {
 
         <nav className="sidebar-nav">
           <div className="sidebar-section-label">Operación</div>
-          {NAV_ITEMS.map((item) => (
+          {ALL_NAV_ITEMS.filter((item) => item.visible(user?.role)).map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end}>
               <item.icon size={16} strokeWidth={2} />
               {item.label}
@@ -59,7 +79,17 @@ export function Layout() {
             <button className="ghost icon-only" aria-label="Notificaciones">
               <Bell size={16} />
             </button>
-            <div className="topbar-avatar" title="Supervisor">SA</div>
+            <div className="topbar-avatar" title={user?.name || 'Usuario'}>
+              {initials}
+            </div>
+            <button
+              className="ghost icon-only"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 
