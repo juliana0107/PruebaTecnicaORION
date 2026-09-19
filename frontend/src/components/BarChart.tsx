@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import type { CSSProperties } from 'react';
+
 interface Bar {
   label: string;
   value: number;
@@ -10,26 +13,37 @@ interface Props {
 }
 
 export function BarChart({ data, emptyMessage = 'Sin datos' }: Props) {
+  const max = useMemo(
+    () => Math.max(...data.map((d) => d.value), 1),
+    [data],
+  );
+
   if (data.length === 0) {
-    return <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{emptyMessage}</p>;
+    return <p className="empty-chart-message">{emptyMessage}</p>;
   }
 
-  const max = Math.max(...data.map((d) => d.value), 1);
-
   return (
-    <div className="bar-chart">
-      {data.map((bar, i) => (
-        <div className="bar-row" key={i}>
-          <span className="bar-label" title={bar.label}>{bar.label}</span>
-          <div className="bar-track">
-            <div
-              className={`bar-fill ${bar.color || 'blue'}`}
-              style={{ width: `${(bar.value / max) * 100}%` }}
-            />
+    <div className="bar-chart" role="list" aria-label="Gráfico de barras">
+      {data.map((bar) => {
+        const width = `${(bar.value / max) * 100}%`;
+        const style: CSSProperties = { width };
+
+        return (
+          <div className="bar-row" key={bar.label} role="listitem">
+            <span className="bar-label" title={bar.label}>
+              {bar.label}
+            </span>
+            <div className="bar-track">
+              <div
+                className={`bar-fill ${bar.color ?? 'blue'}`}
+                style={style}
+                aria-label={`${bar.label}: ${bar.value}`}
+              />
+            </div>
+            <span className="bar-value">{bar.value}</span>
           </div>
-          <span className="bar-value">{bar.value}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

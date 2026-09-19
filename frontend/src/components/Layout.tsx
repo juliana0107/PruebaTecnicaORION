@@ -1,10 +1,10 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Cpu, ClipboardList, Users } from 'lucide-react';
+import { LayoutDashboard, Cpu, ClipboardList, Users, Bell } from 'lucide-react';
 
 const PAGE_INFO: Record<string, { title: string; subtitle: string }> = {
-  '/': { title: 'Dashboard', subtitle: 'Indicadores operacionales' },
+  '/': { title: 'Dashboard', subtitle: 'Estado general de las actividades de mantenimiento' },
   '/assets': { title: 'Activos ITS', subtitle: 'Inventario de infraestructura' },
-  '/work-orders': { title: 'Órdenes de Trabajo', subtitle: 'Planificación y control de mantenimiento' },
+  '/work-orders': { title: 'Órdenes de Trabajo', subtitle: 'Planificación y control' },
   '/crews': { title: 'Cuadrillas', subtitle: 'Asignación y disponibilidad' },
 };
 
@@ -41,17 +41,28 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-footer">
-          © 2026 Autopistas Inteligentes S.A.
+          <span className="status-dot" />
+          Sistema operativo
         </div>
       </aside>
 
       <div className="main">
         <header className="topbar">
-          <div>
-            <div className="topbar-title">{pageInfo.title}</div>
-            <div className="topbar-subtitle">{pageInfo.subtitle}</div>
+          <div className="topbar-left">
+            <div>
+              <div className="topbar-title">{pageInfo.title}</div>
+              <div className="topbar-subtitle">{pageInfo.subtitle}</div>
+            </div>
+          </div>
+
+          <div className="topbar-right">
+            <button className="ghost icon-only" aria-label="Notificaciones">
+              <Bell size={16} />
+            </button>
+            <div className="topbar-avatar" title="Supervisor">SA</div>
           </div>
         </header>
+
         <main className="container">
           <Outlet />
         </main>

@@ -5,16 +5,25 @@ interface Props {
   label: string;
   value: number | string;
   variant?: 'blue' | 'green' | 'purple' | 'orange';
+  onClick?: () => void;
 }
 
-export function StatCard({ icon: Icon, label, value, variant = 'blue' }: Props) {
+export function StatCard({ icon: Icon, label, value, variant = 'blue', onClick }: Props) {
+  const Component = onClick ? 'button' : 'div';
+
   return (
-    <div className="stat-card">
+    <Component
+      className={`stat-card ${onClick ? 'clickable' : ''}`}
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+    >
       <div className={`icon-wrapper ${variant}`}>
-        <Icon size={20} strokeWidth={2} />
+        <Icon size={18} strokeWidth={2} />
       </div>
-      <div className="label">{label}</div>
-      <div className="value">{value}</div>
-    </div>
+      <div className="stat-content">
+        <div className="label">{label}</div>
+        <div className="value">{value}</div>
+      </div>
+    </Component>
   );
 }
