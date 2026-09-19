@@ -1,24 +1,32 @@
 import { Request, Response } from 'express';
 import { assetService } from './asset.service';
-import { createAssetSchema, updateAssetSchema, retireAssetSchema } from './asset.schema';
+import {
+  createAssetSchema,
+  updateAssetSchema,
+  retireAssetSchema,
+  changeStatusSchema,
+  listAssetsQuerySchema,
+} from './asset.schema';
 import { ValidationError } from '../../shared/errors';
 import { getParam } from '../../shared/requestParams';
 
 export const assetController = {
-  async list(_req: Request, res: Response) {
-    const assets = await assetService.list();
+  async list(req: Request, res: Response) {
+    const parsed = listAssetsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      throw new ValidationError('Filtros inválidos', parsed.error.flatten());
+    }
+    const assets = await assetService.list(parsed.data);
     res.json({ data: assets, total: assets.length });
   },
 
   async getById(req: Request, res: Response) {
-    const id = getParam(req, 'id');
-    const asset = await assetService.getById(id);
+    const asset = await assetService.getById(getParam(req, 'id'));
     res.json({ data: asset });
   },
 
   async history(req: Request, res: Response) {
-    const id = getParam(req, 'id');
-    const history = await assetService.getHistory(id);
+    const history = await assetService.getHistory(getParam(req, 'id'));
     res.json({ data: history, total: history.length });
   },
 
@@ -32,22 +40,29 @@ export const assetController = {
   },
 
   async update(req: Request, res: Response) {
-    const id = getParam(req, 'id');
     const parsed = updateAssetSchema.safeParse(req.body);
     if (!parsed.success) {
       throw new ValidationError('Datos inválidos', parsed.error.flatten());
     }
-    const asset = await assetService.update(id, parsed.data);
+    const asset = await assetService.update(getParam(req, 'id'), parsed.data);
+    res.json({ data: asset });
+  },
+
+  async changeStatus(req: Request, res: Response) {
+    const parsed = changeStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new ValidationError('Datos inválidos', parsed.error.flatten());
+    }
+    const asset = await assetService.changeStatus(getParam(req, 'id'), parsed.data);
     res.json({ data: asset });
   },
 
   async retire(req: Request, res: Response) {
-    const id = getParam(req, 'id');
     const parsed = retireAssetSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       throw new ValidationError('Datos inválidos', parsed.error.flatten());
     }
-    const asset = await assetService.retire(id, parsed.data);
+    const asset = await assetService.retire(getParam(req, 'id'), parsed.data);
     res.json({ data: asset });
   },
 };

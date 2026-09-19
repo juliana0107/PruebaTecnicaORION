@@ -9,6 +9,7 @@ router.get('/:id', asyncHandler(assetController.getById));
 router.get('/:id/history', asyncHandler(assetController.history));
 router.post('/', asyncHandler(assetController.create));
 router.put('/:id', asyncHandler(assetController.update));
+router.patch('/:id/status', asyncHandler(assetController.changeStatus));
 router.delete('/:id', asyncHandler(assetController.retire));
 
 export default router;
