@@ -1,0 +1,57 @@
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: orion_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: orion_user
+      POSTGRES_PASSWORD: orion_password
+      POSTGRES_DB: orion_maintenance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orion_user -d orion_maintenance"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: orion_backend
+    restart: always
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://orion_user:orion_password@database:5432/orion_maintenance
+      NODE_ENV: development
+    ports:
+      - "4000:4000"
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orion_frontend
+    restart: always
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
