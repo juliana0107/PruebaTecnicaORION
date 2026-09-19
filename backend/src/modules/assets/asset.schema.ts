@@ -27,7 +27,6 @@ export const createAssetSchema = z.object({
     .optional(),
 });
 
-// No se permite modificar `code` ni `status` por este endpoint
 export const updateAssetSchema = createAssetSchema
   .omit({ code: true, status: true })
   .partial();
@@ -36,6 +35,20 @@ export const retireAssetSchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
+export const changeStatusSchema = z.object({
+  status: z.enum(ASSET_STATUSES as unknown as [string, ...string[]]),
+  reason: z.string().trim().min(3).max(500).optional(),
+});
+
+export const listAssetsQuerySchema = z.object({
+  status: z.enum(ASSET_STATUSES as unknown as [string, ...string[]]).optional(),
+  asset_type_id: z.coerce.number().int().positive().optional(),
+  location_id: z.coerce.number().int().positive().optional(),
+  search: z.string().trim().min(1).max(100).optional(),
+});
+
 export type CreateAssetInput = z.infer<typeof createAssetSchema>;
 export type UpdateAssetInput = z.infer<typeof updateAssetSchema>;
 export type RetireAssetInput = z.infer<typeof retireAssetSchema>;
+export type ChangeStatusInput = z.infer<typeof changeStatusSchema>;
+export type ListAssetsQuery = z.infer<typeof listAssetsQuerySchema>;

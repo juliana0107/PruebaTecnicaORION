@@ -1,7 +1,7 @@
 import { PoolClient } from 'pg';
 import pool from '../../config/database';
 import { Asset, AssetHistoryEntry } from './asset.types';
-import { CreateAssetInput, UpdateAssetInput } from './asset.schema';
+import { CreateAssetInput, UpdateAssetInput, ListAssetsQuery } from './asset.schema';
 
 export interface HistoryPayload {
   asset_id: string;
@@ -12,16 +12,38 @@ export interface HistoryPayload {
   changed_by?: string;
 }
 
-/**
- * Repository: única capa que conoce SQL.
- * No aplica reglas de negocio.
- */
 export const assetRepository = {
-  async findAll(): Promise<Asset[]> {
+  async findAll(filters: ListAssetsQuery = {}): Promise<Asset[]> {
+    const conditions: string[] = [`status <> 'RETIRADO'`];
+    const values: unknown[] = [];
+    let i = 1;
+
+    if (filters.status) {
+      conditions.push(`status = $${i}`);
+      values.push(filters.status);
+      i++;
+    }
+    if (filters.asset_type_id) {
+      conditions.push(`asset_type_id = $${i}`);
+      values.push(filters.asset_type_id);
+      i++;
+    }
+    if (filters.location_id) {
+      conditions.push(`location_id = $${i}`);
+      values.push(filters.location_id);
+      i++;
+    }
+    if (filters.search) {
+      conditions.push(`(code ILIKE $${i} OR name ILIKE $${i})`);
+      values.push(`%${filters.search}%`);
+      i++;
+    }
+
     const result = await pool.query<Asset>(
       `SELECT * FROM assets
-       WHERE status <> 'RETIRADO'
+       WHERE ${conditions.join(' AND ')}
        ORDER BY created_at DESC`,
+      values,
     );
     return result.rows;
   },
