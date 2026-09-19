@@ -269,9 +269,7 @@ td strong { font-weight: 600; color: var(--text); }
 .toast-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .toast-message { font-size: 12px; color: var(--text-muted); }
 
-/* ============================================
-   Row actions
-   ============================================ */
+/* Row actions */
 .row-actions {
   display: flex;
   gap: 6px;
@@ -285,9 +283,7 @@ td strong { font-weight: 600; color: var(--text); }
   font-weight: 500;
 }
 
-/* ============================================
-   Drawer (historial lateral)
-   ============================================ */
+/* Drawer (historial lateral) */
 .drawer-overlay {
   position: fixed;
   inset: 0;
@@ -474,3 +470,107 @@ td strong { font-weight: 600; color: var(--text); }
   text-align: center;
   padding: 20px 0;
 }
+
+/* Login */
+/* ============================================
+   Login
+   ============================================ */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-logo {
+  width: 52px;
+  height: 52px;
+  background: var(--primary-gradient);
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 12px;
+  box-shadow: 0 6px 20px rgba(91, 124, 250, 0.3);
+}
+
+.login-brand h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.login-brand p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.login-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-with-icon input {
+  padding-left: 38px;
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 11px 16px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.login-demo {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.login-demo p { margin: 0; }
+.login-demo strong { color: var(--text); }

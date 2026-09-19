@@ -8,6 +8,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonList } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { EmptyState } from '../components/EmptyState';
+import { useAuth } from '../auth/AuthContext';
+import { PERMISSIONS } from '../auth/permissions';
 
 type ModalType = 'create' | 'edit' | 'status' | 'history' | null;
 
@@ -17,6 +19,9 @@ const CRITICALITIES: AssetCriticality[] = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'];
 export function AssetsPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const { user } = useAuth();
+  const canManage = PERMISSIONS.canManageAssets(user?.role);
+
   const [modal, setModal] = useState<ModalType>(null);
   const [selected, setSelected] = useState<Asset | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +60,11 @@ export function AssetsPage() {
     onError: (e: Error) => { setError(e.message); toast.error('Error', e.message); },
   });
 
-  const close = () => {
-    setModal(null);
-    setSelected(null);
-    setError(null);
-  };
+  const close = () => { setModal(null); setSelected(null); setError(null); };
+  const openCreate = () => { setSelected(null); setModal('create'); };
+  const openEdit = (a: Asset) => { setSelected(a); setModal('edit'); };
+  const openStatus = (a: Asset) => { setSelected(a); setModal('status'); };
+  const openHistory = (a: Asset) => { setSelected(a); setModal('history'); };
 
   const filtered = useMemo(() => {
     return assets.filter((a) => {
@@ -68,11 +73,6 @@ export function AssetsPage() {
       return matchSearch && matchStatus;
     });
   }, [assets, search, statusFilter]);
-
-  const openCreate = () => { setSelected(null); setModal('create'); };
-  const openEdit = (a: Asset) => { setSelected(a); setModal('edit'); };
-  const openStatus = (a: Asset) => { setSelected(a); setModal('status'); };
-  const openHistory = (a: Asset) => { setSelected(a); setModal('history'); };
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,45 +122,49 @@ export function AssetsPage() {
           <p>{assets.length} activos registrados</p>
         </div>
         <div className="page-header-actions">
-          <button className="primary" onClick={openCreate}><Plus size={14} /> Nuevo activo</button>
+          {canManage && (
+            <button className="primary" onClick={openCreate}>
+              <Plus size={14} /> Nuevo activo
+            </button>
+          )}
         </div>
       </div>
 
       <div className="page-toolbar">
         <div className="search-wrapper">
-            <Search size={15} />
-            <input
+          <Search size={15} />
+          <input
             placeholder="Buscar por código o nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            />
+          />
         </div>
         <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as AssetStatus | '')}
+          className="filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as AssetStatus | '')}
         >
-            <option value="">Todos los estados</option>
-            {ASSET_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+          <option value="">Todos los estados</option>
+          {ASSET_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
         {(search || statusFilter) && (
-            <button
+          <button
             className="toolbar-clear"
             onClick={() => { setSearch(''); setStatusFilter(''); }}
             title="Limpiar filtros"
-            >
+          >
             <X size={15} />
-            </button>
+          </button>
         )}
-        </div>
+      </div>
 
       <div className="table-wrapper">
         {filtered.length === 0 ? (
           <EmptyState
             icon={Cpu}
             title={assets.length === 0 ? 'No hay activos registrados' : 'Sin resultados'}
-            description="Crea el primer activo ITS para comenzar"
-            action={assets.length === 0 ? { label: '+ Nuevo activo', onClick: openCreate } : undefined}
+            description={assets.length === 0 ? 'Crea el primer activo ITS para comenzar' : 'Prueba con otros filtros de búsqueda'}
+            action={canManage && assets.length === 0 ? { label: '+ Nuevo activo', onClick: openCreate } : undefined}
           />
         ) : (
           <table>
@@ -170,7 +174,7 @@ export function AssetsPage() {
                 <th>Nombre</th>
                 <th>Estado</th>
                 <th>Criticidad</th>
-                <th style={{ textAlign: 'right' }}>Acciones</th>
+                {canManage && <th style={{ textAlign: 'right' }}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -180,13 +184,21 @@ export function AssetsPage() {
                   <td>{a.name}</td>
                   <td><StatusBadge status={a.status} /></td>
                   <td><StatusBadge status={a.criticality} /></td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="ghost" onClick={() => openHistory(a)} title="Historial"><History size={14} /></button>
-                      <button className="ghost" onClick={() => openEdit(a)} title="Editar" disabled={a.status === 'RETIRADO'}><Pencil size={14} /></button>
-                      <button className="ghost" onClick={() => openStatus(a)} title="Cambiar estado" disabled={a.status === 'RETIRADO'}><ArrowRightLeft size={14} /></button>
-                    </div>
-                  </td>
+                  {canManage && (
+                    <td>
+                      <div className="row-actions">
+                        <button className="ghost" onClick={() => openHistory(a)} title="Historial">
+                          <History size={14} />
+                        </button>
+                        <button className="ghost" onClick={() => openEdit(a)} title="Editar" disabled={a.status === 'RETIRADO'}>
+                          <Pencil size={14} />
+                        </button>
+                        <button className="ghost" onClick={() => openStatus(a)} title="Cambiar estado" disabled={a.status === 'RETIRADO'}>
+                          <ArrowRightLeft size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -318,7 +330,9 @@ export function AssetsPage() {
             </div>
             <div className="drawer-body">
               {history.length === 0 ? (
-                <p className="empty-drawer-message">Sin cambios registrados</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: 40 }}>
+                  Sin cambios registrados
+                </p>
               ) : (
                 history.map((h: any) => (
                   <div key={h.id} className="history-item">

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, ClipboardList, History, Play, Pause, CheckCircle2, XCircle, UserPlus, RotateCcw, Search } from 'lucide-react';
+import { Plus, ClipboardList, History, Play, Pause, CheckCircle2, XCircle, UserPlus, RotateCcw, Search, X } from 'lucide-react';
 import { workOrdersApi, assetsApi, crewsApi } from '../api/endpoints';
 import type { WorkOrder, WorkOrderPriority, WorkOrderType, WorkOrderStatus } from '../types';
 import { Modal } from '../components/Modal';
@@ -8,12 +8,22 @@ import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonList } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { EmptyState } from '../components/EmptyState';
+import { useAuth } from '../auth/AuthContext';
+import { PERMISSIONS } from '../auth/permissions';
 
 type ModalType = 'create' | 'assign' | 'complete' | 'cancel' | 'history' | null;
 
 export function WorkOrdersPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const { user } = useAuth();
+
+  const canCreate = PERMISSIONS.canCreateWorkOrders(user?.role);
+  const canAssign = PERMISSIONS.canAssignCrew(user?.role);
+  const canExecute = PERMISSIONS.canExecuteWorkOrder(user?.role);
+  const canComplete = PERMISSIONS.canCompleteWorkOrder(user?.role);
+  const canCancel = PERMISSIONS.canCancelWorkOrder(user?.role);
+
   const [modal, setModal] = useState<ModalType>(null);
   const [selected, setSelected] = useState<WorkOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,9 +130,11 @@ export function WorkOrdersPage() {
           <p>{workOrders.length} órdenes registradas</p>
         </div>
         <div className="page-header-actions">
-          <button className="primary" onClick={openCreate}>
-            <Plus size={14} /> Nueva OT
-          </button>
+          {canCreate && (
+            <button className="primary" onClick={openCreate}>
+              <Plus size={14} /> Nueva OT
+            </button>
+          )}
         </div>
       </div>
 
@@ -145,6 +157,15 @@ export function WorkOrdersPage() {
             <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
           ))}
         </select>
+        {(search || statusFilter) && (
+          <button
+            className="toolbar-clear"
+            onClick={() => { setSearch(''); setStatusFilter(''); }}
+            title="Limpiar filtros"
+          >
+            <X size={15} />
+          </button>
+        )}
       </div>
 
       <div className="table-wrapper">
@@ -153,7 +174,7 @@ export function WorkOrdersPage() {
             icon={ClipboardList}
             title={workOrders.length === 0 ? 'No hay órdenes registradas' : 'Sin resultados'}
             description={workOrders.length === 0 ? 'Crea la primera orden de trabajo' : 'Prueba con otros filtros'}
-            action={workOrders.length === 0 ? { label: '+ Nueva OT', onClick: openCreate } : undefined}
+            action={canCreate && workOrders.length === 0 ? { label: '+ Nueva OT', onClick: openCreate } : undefined}
           />
         ) : (
           <table>
@@ -186,7 +207,7 @@ export function WorkOrdersPage() {
                         <History size={14} />
                       </button>
 
-                      {w.status === 'PENDIENTE' && (
+                      {w.status === 'PENDIENTE' && canAssign && (
                         <button
                           className="primary"
                           onClick={() => openAssign(w)}
@@ -197,7 +218,7 @@ export function WorkOrdersPage() {
                         </button>
                       )}
 
-                      {w.status === 'ASIGNADA' && (
+                      {w.status === 'ASIGNADA' && canExecute && (
                         <button
                           className="primary"
                           onClick={() => startM.mutate(w.id)}
@@ -211,26 +232,30 @@ export function WorkOrdersPage() {
 
                       {w.status === 'EN_EJECUCION' && (
                         <>
-                          <button
-                            className="secondary"
-                            onClick={() => pauseM.mutate(w.id)}
-                            title="Pausar"
-                            disabled={pauseM.isPending}
-                          >
-                            <Pause size={14} />
-                          </button>
-                          <button
-                            className="primary"
-                            onClick={() => openComplete(w)}
-                            title="Completar"
-                            disabled={completeM.isPending}
-                          >
-                            <CheckCircle2 size={14} /> Completar
-                          </button>
+                          {canExecute && (
+                            <button
+                              className="secondary"
+                              onClick={() => pauseM.mutate(w.id)}
+                              title="Pausar"
+                              disabled={pauseM.isPending}
+                            >
+                              <Pause size={14} />
+                            </button>
+                          )}
+                          {canComplete && (
+                            <button
+                              className="primary"
+                              onClick={() => openComplete(w)}
+                              title="Completar"
+                              disabled={completeM.isPending}
+                            >
+                              <CheckCircle2 size={14} /> Completar
+                            </button>
+                          )}
                         </>
                       )}
 
-                      {w.status === 'PAUSADA' && (
+                      {w.status === 'PAUSADA' && canExecute && (
                         <button
                           className="primary"
                           onClick={() => resumeM.mutate(w.id)}
@@ -242,7 +267,7 @@ export function WorkOrdersPage() {
                         </button>
                       )}
 
-                      {!['COMPLETADA', 'CANCELADA'].includes(w.status) && (
+                      {!['COMPLETADA', 'CANCELADA'].includes(w.status) && canCancel && (
                         <button
                           className="ghost"
                           onClick={() => openCancel(w)}
@@ -322,7 +347,7 @@ export function WorkOrdersPage() {
               </select>
             </div>
             {crews.filter((c) => c.status === 'DISPONIBLE').length === 0 && (
-              <div className="error warning-message">
+              <div className="error" style={{ background: 'var(--warning-soft)', color: 'var(--warning-text)' }}>
                 No hay cuadrillas disponibles. Crea o libera una primero.
               </div>
             )}

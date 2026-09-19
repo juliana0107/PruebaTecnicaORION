@@ -1,6 +1,17 @@
 import { api } from './client';
 import type { Asset, AssetType, Crew, DashboardSummary, Location, WorkOrder } from '../types';
 
+export const authApi = {
+  login: async (email: string, password: string) => {
+    const r = await api.post('/auth/login', { email, password });
+    return r.data.data;
+  },
+  me: async () => {
+    const r = await api.get('/auth/me');
+    return r.data.data;
+  },
+};
+
 export const assetsApi = {
   list: async (): Promise<Asset[]> => (await api.get('/assets')).data.data,
   get: async (id: string): Promise<Asset> => (await api.get(`/assets/${id}`)).data.data,

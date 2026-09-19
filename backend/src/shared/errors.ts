@@ -37,3 +37,15 @@ export class BusinessRuleError extends AppError {
     super(message, 422, 'BUSINESS_RULE_VIOLATION');
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'No autenticado') {
+    super(message, 401, 'UNAUTHORIZED');
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Acceso denegado') {
+    super(message, 403, 'FORBIDDEN');
+  }
+}

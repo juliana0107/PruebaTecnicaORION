@@ -9,6 +9,7 @@ import catalogRoutes from './modules/catalogs/catalog.routes';
 import workOrderRoutes from './modules/work-orders/workOrder.routes';
 import crewRoutes from './modules/crews/crew.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import authRoutes from './modules/auth/auth.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/catalogs', catalogRoutes);
 app.use('/api/work-orders', workOrderRoutes);
 app.use('/api/crews', crewRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/auth', authRoutes);
 // Manejo de rutas no encontradas y errores
 app.use(notFoundHandler);
 app.use(errorHandler);
