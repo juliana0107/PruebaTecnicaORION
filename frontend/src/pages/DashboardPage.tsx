@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Cpu, ClipboardList, Users, RefreshCw, Clock, ArrowUpRight } from 'lucide-react';
+import { Cpu, ClipboardList, Users, RefreshCw } from 'lucide-react';
 import { dashboardApi } from '../api/endpoints';
 import { StatCard } from '../components/StatCard';
 import { BarChart } from '../components/BarChart';
