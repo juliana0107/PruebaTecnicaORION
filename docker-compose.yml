@@ -28,6 +28,8 @@ services:
       PORT: 4000
       DATABASE_URL: postgres://orion_user:orion_password@database:5432/orion_maintenance
       NODE_ENV: development
+      JWT_SECRET: orion-docker-secret-change-me-in-prod
+      JWT_EXPIRES_IN: 8h
     ports:
       - "4000:4000"
     depends_on:
